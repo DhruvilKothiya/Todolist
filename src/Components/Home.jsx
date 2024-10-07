@@ -11,7 +11,7 @@ const Home = () => {
     console.log(token);
 
     // Navigate to TokenPage with the UUID as a route parameter
-    navigate(`/tokenpage/${token}`);
+    navigate(`/tokenpage?token=${token}`);
   };
 
   return (
