@@ -6,17 +6,20 @@ import TokenPage from "./TokenPage";
 import About from "./About";
 import TodoList from "./TodoList"; // Import TodoList component
 import Layout from "./Layout";
+import Title from "./Title";
+// import Title from "./Title";
 
 const AppRoutes = () => {
   const routes = useRoutes([
     {
-      path: "/",
+      path: "/",  
       element: <Layout />,
       children: [
         { path: "/", element: <Home /> },
         { path: "/about", element: <About /> },
         { path: "/tokenpage/:token", element: <TokenPage /> },
-        { path: "/todolist", element: <TodoList /> }, // Add route for TodoList
+        { path: "/todolist", element: <TodoList /> },
+        { path: "/todolist/:id", element: <Title/>}
       ],
     },
   ]);

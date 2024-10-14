@@ -1,0 +1,36 @@
+/* Layout.css */
+.layout {
+    display: flex;
+  }
+  
+  .main-content {
+    flex-grow: 1;
+    margin-left: -240px; /* Closed drawer width */
+    transition: margin 0.3s ease;
+  }
+  
+  .main-content.open {
+    margin-left: 0; /* Open drawer */
+  }
+  
+  .app-bar {
+    transition: margin 0.3s ease, width 0.3s ease;
+  }
+  
+  .app-bar.open {
+    width: calc(100% - 240px); /* Adjusted width when drawer is open */
+    margin-left: 240px;
+  }
+  
+  .drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .drawer-logo {
+    width: 80px;
+    height: 60px;
+    border-radius: 8px;
+  }
+  
