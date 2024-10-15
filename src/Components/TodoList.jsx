@@ -51,7 +51,8 @@ export default function TodoList() {
   const [editingTodoId, setEditingTodoId] = useState(null);
   const [editingTodoText, setEditingTodoText] = useState({});
   const [checkedStatus, setCheckedStatus] = useState({});
-  const navigate=useNavigate() // Track checked status for each todo
+  const [searchTerm, setSearchTerm] = useState(""); // State to store search term
+  const navigate = useNavigate();
 
   // Fetch tasks on component load
   useEffect(() => {
@@ -148,9 +149,14 @@ export default function TodoList() {
       });
   };
 
-  const handleTitleClick=(id)=>{
-    navigate(`/todolist/${id}`)
-  }
+  const handleTitleClick = (id) => {
+    navigate(`/todolist/${id}`);
+  };
+
+  // Filter todos based on the search term
+  const filteredTodos = todos.filter((todo) =>
+    todo.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <ThemeProvider theme={theme}>
@@ -175,6 +181,16 @@ export default function TodoList() {
           <Typography variant="h1" align="center" gutterBottom>
             Todo App
           </Typography>
+
+          {/* Search Bar */}
+          <TextField
+            fullWidth
+            variant="outlined"
+            label="Search Todos"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{ marginBottom: "20px" }}
+          />
 
           {/* Add Todo Section */}
           <div
@@ -206,7 +222,7 @@ export default function TodoList() {
           </div>
 
           <List>
-            {todos.map((todo) => (
+            {filteredTodos.map((todo) => (
               <ListItem
                 key={todo.id}
                 style={{
@@ -236,7 +252,11 @@ export default function TodoList() {
                     disabled={checkedStatus[todo.id]} // Disable editing if the checkbox is checked
                   />
                 ) : (
-                  <ListItemText primary={todo.title} onClick={() => handleTitleClick(todo.id)} sx={{cursor:'pointer'}}/>
+                  <ListItemText
+                    primary={todo.title}
+                    onClick={() => handleTitleClick(todo.id)}
+                    sx={{ cursor: "pointer" }}
+                  />
                 )}
 
                 {editingTodoId === todo.id ? (
