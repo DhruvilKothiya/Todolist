@@ -17,9 +17,9 @@ import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import CheckIcon from "@mui/icons-material/Check";
 import axios from "axios";
-import { Navigate, useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
-// Create a custom theme
+
 const theme = createTheme({
   palette: {
     primary: {
@@ -49,39 +49,81 @@ export default function TodoList() {
   const [todos, setTodos] = useState([]);
   const [newTodo, setNewTodo] = useState("");
   const [editingTodoId, setEditingTodoId] = useState(null);
-  const [editingTodoText, setEditingTodoText] = useState({});
+  const [editingTodoText, setEditingTodoText] = useState("");
   const [checkedStatus, setCheckedStatus] = useState({});
-  const [searchTerm, setSearchTerm] = useState(""); // State to store search term
-  const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
+  const [sortOrder, setSortOrder] = useState("asc"); // State for sorting order
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate=useNavigate("")
 
-  // Fetch tasks on component load
+  useEffect(()=>{
+    if(searchParams){
+      if(!searchParams.get("search")){
+        navigate("?search=")
+      }
+      else{
+        setSearchTerm(searchParams.get("search"))
+      }
+    }
+  }, [searchParams])
+
+  // Debounce the search term
   useEffect(() => {
-    axios
-      .get("http://localhost:8000/users/1/tasks/")
-      .then((response) => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+      navigate(`?search=${searchTerm}&sort=${sortOrder}`)
+    }, 500);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchTerm,sortOrder]);
+
+  useEffect(() => {
+    const fetchTodos = async () => {
+      try {
+        let response;
+        if (debouncedSearchTerm === "") {
+          // Fetch all tasks
+          response = await axios.get(
+            `http://localhost:8000/users/1/tasks/?sort=${sortOrder}`
+          );
+        } else {
+          // Fetch filtered tasks
+          response = await axios.get(
+            `http://localhost:8000/users/1/tasks/?search=${debouncedSearchTerm}&sort=${sortOrder}`
+          );
+        }
+
         setTodos(response.data);
         const initialCheckedStatus = {};
         response.data.forEach((todo) => {
           initialCheckedStatus[todo.id] = todo.is_completed;
         });
         setCheckedStatus(initialCheckedStatus);
-      })
-      .catch((error) => {
+      } catch (error) {
         console.error("There was an error fetching the tasks!", error);
-      });
-  }, []);
+      }
+    };
 
-  // Add new todo
+    fetchTodos();
+  }, [debouncedSearchTerm, sortOrder]);
+
   const addTodo = () => {
     if (newTodo.trim() !== "") {
       axios
         .post(
-          `http://localhost:8000/tasks/?user_id=${1}&title=${newTodo}&is_completed=false`
+          `http://localhost:8000/tasks/`, {
+            title: newTodo,
+            user_id: 1,
+            is_completed: false,
+          }
         )
         .then((response) => {
           setTodos([...todos, response.data]);
           setNewTodo("");
-          setCheckedStatus((prev) => ({ ...prev, [response.data.id]: false })); // Initialize checkbox state
+          setCheckedStatus((prev) => ({ ...prev, [response.data.id]: false }));
         })
         .catch((error) => {
           console.error("There was an error creating the task!", error);
@@ -89,13 +131,12 @@ export default function TodoList() {
     }
   };
 
-  // Delete a todo
   const deleteTodo = (id) => {
     axios
       .delete(`http://localhost:8000/tasks/${id}`)
       .then(() => {
         setTodos(todos.filter((todo) => todo.id !== id));
-        const { [id]: _, ...remaining } = checkedStatus; // Remove the deleted task's checkbox state
+        const { [id]: _, ...remaining } = checkedStatus;
         setCheckedStatus(remaining);
       })
       .catch((error) => {
@@ -103,12 +144,6 @@ export default function TodoList() {
       });
   };
 
-  const startEditing = (id, text) => {
-    setEditingTodoId(id);
-    setEditingTodoText(text);
-  };
-
-  // Save edited todo
   const saveTodo = (id) => {
     const todoToUpdate = todos.find((todo) => todo.id === id);
 
@@ -123,14 +158,13 @@ export default function TodoList() {
             todo.id === id ? { ...todo, title: editingTodoText } : todo
           )
         );
-        setEditingTodoId(null); // Exit edit mode
+        setEditingTodoId(null);
       })
       .catch((error) => {
         console.error("There was an error updating the task!", error);
       });
   };
 
-  // Handle checkbox change
   const handleCheckboxChange = (id) => {
     const newCheckedStatus = !checkedStatus[id];
     setCheckedStatus((prev) => ({ ...prev, [id]: newCheckedStatus }));
@@ -149,15 +183,17 @@ export default function TodoList() {
       });
   };
 
-  const handleTitleClick = (id) => {
-    navigate(`/todolist/${id}`);
+  const handleSearchChange = (event) => {
+    setSearchTerm(event.target.value);
   };
 
-  // Filter todos based on the search term
-  const filteredTodos = todos.filter((todo) =>
-    todo.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handleSortChange = (order) => {
+    setSortOrder(order);
+  };
 
+  const handleClickRedirect=(id)=>{
+    navigate(`/todolist/${id}`)
+  }
   return (
     <ThemeProvider theme={theme}>
       <div
@@ -166,7 +202,7 @@ export default function TodoList() {
           justifyContent: "center",
           alignItems: "center",
           minHeight: "100vh",
-          backgroundImage: "linear-gradient(#00ded1,#2ab1e0,#348beb)",
+          backgroundImage: "linear-gradient(#94FFD8,#2ab1e0,#348beb)",
         }}
       >
         <Paper
@@ -188,7 +224,7 @@ export default function TodoList() {
             variant="outlined"
             label="Search Todos"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={handleSearchChange}
             style={{ marginBottom: "20px" }}
           />
 
@@ -221,8 +257,34 @@ export default function TodoList() {
             </Button>
           </div>
 
+          {/* Sort Buttons */}
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <Button
+              variant="outlined"
+              onClick={() => handleSortChange("asc")}
+              color={sortOrder === "asc" ? "primary" : "default"}
+              style={{
+                borderColor: sortOrder === "asc" ? "#6200ea" : "#ccc",
+                color: sortOrder === "asc" ? "#6200ea" : "#000",
+              }}
+            >
+              Sort Ascending
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={() => handleSortChange("desc")}
+              color={sortOrder === "desc" ? "primary" : "default"}
+              style={{
+                borderColor: sortOrder === "desc" ? "#6200ea" : "#ccc",
+                color: sortOrder === "desc" ? "#6200ea" : "#000",
+              }}
+            >
+              Sort Descending
+            </Button>
+          </div>
+
           <List>
-            {filteredTodos.map((todo) => (
+            {todos.map((todo) => (
               <ListItem
                 key={todo.id}
                 style={{
@@ -233,11 +295,11 @@ export default function TodoList() {
                   borderRadius: "8px",
                   textDecoration: checkedStatus[todo.id]
                     ? "line-through"
-                    : "none", // Strike-through for completed tasks
+                    : "none",
                 }}
               >
                 <Checkbox
-                  checked={checkedStatus[todo.id] || false} // Set initial checkbox state
+                  checked={checkedStatus[todo.id] || false}
                   onChange={() => handleCheckboxChange(todo.id)}
                   inputProps={{ "aria-label": "controlled" }}
                 />
@@ -249,43 +311,45 @@ export default function TodoList() {
                     onChange={(e) => setEditingTodoText(e.target.value)}
                     variant="outlined"
                     style={{ marginRight: "10px" }}
-                    disabled={checkedStatus[todo.id]} // Disable editing if the checkbox is checked
+                    disabled={checkedStatus[todo.id]}
                   />
                 ) : (
                   <ListItemText
                     primary={todo.title}
-                    onClick={() => handleTitleClick(todo.id)}
+                    onClick={()=>handleClickRedirect(todo.id)}
                     sx={{ cursor: "pointer" }}
                   />
                 )}
 
-                {editingTodoId === todo.id ? (
+                <div>
+                  {editingTodoId === todo.id ? (
+                    <IconButton
+                      onClick={() => saveTodo(todo.id)}
+                      color="primary"
+                      aria-label="save"
+                    >
+                      <CheckIcon />
+                    </IconButton>
+                  ) : (
+                    <IconButton
+                      onClick={() => {
+                        setEditingTodoId(todo.id);
+                        setEditingTodoText(todo.title);
+                      }}
+                      color="primary"
+                      aria-label="edit"
+                    >
+                      <EditIcon />
+                    </IconButton>
+                  )}
                   <IconButton
-                    aria-label="save"
-                    onClick={() => saveTodo(todo.id)}
-                    color="primary"
-                    disabled={checkedStatus[todo.id]} // Disable save button if the checkbox is checked
+                    onClick={() => deleteTodo(todo.id)}
+                    color="error"
+                    aria-label="delete"
                   >
-                    <CheckIcon />
+                    <DeleteIcon />
                   </IconButton>
-                ) : (
-                  <IconButton
-                    aria-label="edit"
-                    onClick={() => startEditing(todo.id, todo.title)}
-                    color="primary"
-                    disabled={checkedStatus[todo.id]} // Disable edit button if the checkbox is checked
-                  >
-                    <EditIcon />
-                  </IconButton>
-                )}
-
-                <IconButton
-                  aria-label="delete"
-                  onClick={() => deleteTodo(todo.id)}
-                  color="error"
-                >
-                  <DeleteIcon />
-                </IconButton>
+                </div>
               </ListItem>
             ))}
           </List>

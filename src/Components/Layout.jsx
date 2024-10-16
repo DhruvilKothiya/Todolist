@@ -41,7 +41,7 @@ const Layout = () => {
 
       {/* AppBar with conditional class names */}
       <AppBar position="fixed" className={`app-bar ${open ? "open" : ""}`}>
-        <Toolbar>
+        <Toolbar sx={{paddingRight:'15px !important'}}>
           <IconButton
             color="inherit"
             aria-label="open drawer"
@@ -96,7 +96,7 @@ const Layout = () => {
         <List>
           {["Dashboard", "TodoList", "Open Settings"].map((text) => (
             <ListItem key={text} disablePadding>
-              <ListItemButton component={Link} to={`/${text.toLowerCase()}`}>
+              <ListItemButton component={Link} to={`${text==="TodoList"?text.toLowerCase()+'?search=':text.toLowerCase()}`}>
                 <ListItemText primary={text} />
               </ListItemButton>
             </ListItem>

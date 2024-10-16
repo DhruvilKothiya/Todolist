@@ -1,4 +1,3 @@
-// src/Navbar.jsx
 import React from "react";
 import { Link } from "react-router-dom"; // Ensure Link is imported
 import {
@@ -6,35 +5,24 @@ import {
   Toolbar,
   IconButton,
   Typography,
-  Menu,
   Container,
   Avatar,
   Box,
   Button,
   Tooltip,
+  Menu,
   MenuItem,
 } from "@mui/material";
-import MenuIcon from "@mui/icons-material/Menu";
-import AdbIcon from "@mui/icons-material/Adb";
 
-const pages = ["Home", "About"]; // Updated pages
-const settings = ["Profile", "Account", "Logout"]; // Keep your settings as is
+const pages = ["Home", "About"];
+const settings = ["Profile", "Account", "Logout"];
 
 const Navbar = () => {
-  const [anchorElNav, setAnchorElNav] = React.useState(null);
   const [anchorElUser, setAnchorElUser] = React.useState(null);
 
-  // Handlers for menu open/close
-  const handleOpenNavMenu = (event) => {
-    setAnchorElNav(event.currentTarget);
-  };
-
+  // Handlers for user settings menu
   const handleOpenUserMenu = (event) => {
     setAnchorElUser(event.currentTarget);
-  };
-
-  const handleCloseNavMenu = () => {
-    setAnchorElNav(null);
   };
 
   const handleCloseUserMenu = () => {
@@ -43,51 +31,10 @@ const Navbar = () => {
 
   return (
     <AppBar position="static">
-      <Container maxWidth="xl" sx={{ paddingLeft: "0px", paddingRight: "0px" }}>
-        <Toolbar disableGutters>
-          <Box sx={{ flexGrow: 1, display: { xs: "flex", md: "none" } }}>
-            <IconButton
-              size="large"
-              aria-label="open navigation menu"
-              aria-controls="menu-appbar"
-              aria-haspopup="true"
-              onClick={handleOpenNavMenu}
-              color="inherit"
-            >
-              <MenuIcon />
-            </IconButton>
-            <Menu
-              id="menu-appbar"
-              anchorEl={anchorElNav}
-              anchorOrigin={{
-                vertical: "bottom",
-                horizontal: "left",
-              }}
-              keepMounted
-              transformOrigin={{
-                vertical: "top",
-                horizontal: "left",
-              }}
-              open={Boolean(anchorElNav)}
-              onClose={handleCloseNavMenu}
-              sx={{ display: { xs: "block", md: "none" } }}
-            >
-              {pages.map((page) => (
-                <MenuItem key={page} onClick={handleCloseNavMenu}>
-                  <Typography textAlign="center">
-                    <Link
-                      to={`/${page.toLowerCase()}`}
-                      style={{ textDecoration: "none", color: "inherit" }}
-                    >
-                      {page}
-                    </Link>
-                  </Typography>
-                </MenuItem>
-              ))}
-            </Menu>
-          </Box>
-
-          <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" } }}>
+      <Container maxWidth="xl" sx={{ paddingLeft: "0px !important ", paddingRight: "0px !important " }}>
+        <Toolbar disableGutters >
+          {/* Box for Home and About (now visible at all screen sizes) */}
+          <Box sx={{ flexGrow: 1, display: "flex" }}>
             {pages.map((page) => (
               <Button
                 key={page}
@@ -100,6 +47,7 @@ const Navbar = () => {
             ))}
           </Box>
 
+          {/* User Avatar and Settings */}
           <Box sx={{ flexGrow: 0 }}>
             <Tooltip title="Open settings">
               <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
