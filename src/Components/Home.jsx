@@ -13,12 +13,9 @@ const Home = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const handlesubmit = () => {
-    // Generate a UUID
-    const token = uuidv4();
+    const token=uuidv4()
     console.log(token);
-
-    // Navigate to TokenPage with the UUID as a route parameter
-    navigate(`/tokenpage?token=${token}`);
+    navigate(`/token/${token}`);
   };
 
   return (

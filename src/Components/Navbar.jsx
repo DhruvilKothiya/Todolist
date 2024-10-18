@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom"; // Ensure Link is imported
+import { Link, Navigate } from "react-router-dom"; // Ensure Link is imported
 import {
   AppBar,
   Toolbar,
@@ -15,10 +15,10 @@ import {
 } from "@mui/material";
 
 const pages = ["Home", "About"];
-const settings = ["Profile", "Account", "Logout"];
+const settings = ["Profile", "Logout"];
 
 const Navbar = () => {
-  const [anchorElUser, setAnchorElUser] = React.useState(null);
+  const [anchorElUser, setAnchorElUser] = React.useState();
 
   // Handlers for user settings menu
   const handleOpenUserMenu = (event) => {
@@ -29,22 +29,33 @@ const Navbar = () => {
     setAnchorElUser(null);
   };
 
+  // Array destructuring
+  const [home, about] = pages;
+  const [profile, logout] = settings;
+
   return (
     <AppBar position="static">
-      <Container maxWidth="xl" sx={{ paddingLeft: "0px !important ", paddingRight: "0px !important " }}>
-        <Toolbar disableGutters >
+      <Container
+        maxWidth="xl"
+        sx={{ paddingLeft: "0px !important", paddingRight: "0px !important" }}
+      >
+        <Toolbar disableGutters>
           {/* Box for Home and About (now visible at all screen sizes) */}
           <Box sx={{ flexGrow: 1, display: "flex" }}>
-            {pages.map((page) => (
-              <Button
-                key={page}
-                sx={{ my: 2, color: "white", display: "block" }}
-                component={Link}
-                to={`/${page.toLowerCase()}`}
-              >
-                {page}
-              </Button>
-            ))}
+            <Button
+              sx={{ my: 2, color: "white", display: "block" }}
+              component={Link}
+              to={`/`}
+            >
+              {home}
+            </Button>
+            <Button
+              sx={{ my: 2, color: "white", display: "block" }}
+              component={Link}
+              to={`/${about.toLowerCase()}`}
+            >
+              {about}
+            </Button>
           </Box>
 
           {/* User Avatar and Settings */}
@@ -70,11 +81,12 @@ const Navbar = () => {
               open={Boolean(anchorElUser)}
               onClose={handleCloseUserMenu}
             >
-              {settings.map((setting) => (
-                <MenuItem key={setting} onClick={handleCloseUserMenu}>
-                  <Typography textAlign="center">{setting}</Typography>
-                </MenuItem>
-              ))}
+              <MenuItem onClick={handleCloseUserMenu}>
+                <Typography textAlign="center" >{profile}</Typography>
+              </MenuItem>
+              <MenuItem onClick={handleCloseUserMenu}>
+                <Typography textAlign="center">{logout}</Typography>
+              </MenuItem>
             </Menu>
           </Box>
         </Toolbar>

@@ -41,7 +41,7 @@ const Layout = () => {
 
       {/* AppBar with conditional class names */}
       <AppBar position="fixed" className={`app-bar ${open ? "open" : ""}`}>
-        <Toolbar sx={{paddingRight:'15px !important'}}>
+        <Toolbar sx={{ paddingRight: "15px !important" }}>
           <IconButton
             color="inherit"
             aria-label="open drawer"
@@ -88,19 +88,29 @@ const Layout = () => {
               width: "50%", // Adjust width
               height: "130%", // Adjust height
               borderRadius: "8px",
-              marginTop:'-30px' // Optional: to give it a rounded corner
+              marginTop: "-30px", // Optional: to give it a rounded corner
             }}
           />
         </Box>
 
         <List>
-          {["Dashboard", "TodoList", "Open Settings"].map((text) => (
-            <ListItem key={text} disablePadding>
-              <ListItemButton component={Link} to={`${text==="TodoList"?text.toLowerCase()+'?search=':text.toLowerCase()}`}>
-                <ListItemText primary={text} />
-              </ListItemButton>
-            </ListItem>
-          ))}
+          <ListItem disablePadding>
+            <ListItemButton component={Link} to="/dashboard">
+              <ListItemText primary="Dashboard" />
+            </ListItemButton>
+          </ListItem>
+
+          <ListItem disablePadding>
+            <ListItemButton component={Link} to="/todolist?search=">
+              <ListItemText primary="TodoList" />
+            </ListItemButton>
+          </ListItem>
+
+          <ListItem disablePadding>
+            <ListItemButton component={Link} to="/setting">
+              <ListItemText primary="Settings" />
+            </ListItemButton>
+          </ListItem>
         </List>
       </Drawer>
 

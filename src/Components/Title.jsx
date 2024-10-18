@@ -1,12 +1,15 @@
 import { collapseClasses } from "@mui/material";
 import axios from "axios";
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom";
+// import { v4 as uuidv4 } from "uuid"; 
 
 export default function Title() {
-  const { id } = useParams();
+  const { id} = useParams();
   const [todos, setTodos] = useState(null);
-  console.log('todos',todos);
+  const location = useLocation();
+  // const token =uuidv4()
+  const {token} = location.state;
 
   useEffect(() => {
     axios
@@ -27,6 +30,7 @@ export default function Title() {
   return (
     <div>
       <h1 >{todos?.title}</h1>   
+      <h2>{location.state?.token}</h2>
       <p>Status: {todos.is_completed ? "Completed" : "Not Completed"}</p> 
     </div>
   );

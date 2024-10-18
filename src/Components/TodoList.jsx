@@ -17,8 +17,10 @@ import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import CheckIcon from "@mui/icons-material/Check";
 import axios from "axios";
+import Pagination from "@mui/material/Pagination";
+import Stack from "@mui/material/Stack";
 import { useNavigate, useSearchParams } from "react-router-dom";
-
+import { v4 as uuidv4 } from "uuid";
 
 const theme = createTheme({
   palette: {
@@ -55,48 +57,78 @@ export default function TodoList() {
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
   const [sortOrder, setSortOrder] = useState("asc"); // State for sorting order
   const [searchParams, setSearchParams] = useSearchParams();
-  const navigate=useNavigate("")
+  const navigate = useNavigate("");
+  const [changesearch, setChangeSearch] = useState([]);
+  const [flag, setFlag] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(10);
 
-  useEffect(()=>{
-    if(searchParams){
-      if(!searchParams.get("search")){
-        navigate("?search=")
-      }
-      else{
-        setSearchTerm(searchParams.get("search"))
+  useEffect(() => {
+    if (searchParams) {
+      if (!searchParams.get("search")) {
+        navigate("?search=");
+      } else {
+        setSearchTerm(searchParams.get("search"));
       }
     }
-  }, [searchParams])
+  }, [searchParams]);
 
   // Debounce the search term
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
-      navigate(`?search=${searchTerm}&sort=${sortOrder}`)
+      navigate(`?search=${searchTerm}&sort=${sortOrder}`);
     }, 500);
 
     return () => {
       clearTimeout(handler);
     };
-  }, [searchTerm,sortOrder]);
+  }, [searchTerm, sortOrder]);
+
+  useEffect(() => {
+    const fetchTodos = async () => {
+      try {
+        const limit = 5; // Tasks per pagec
+        const offset = (page - 1) * limit;
+        let response = await axios.get(
+          `http://localhost:8000/users/1/tasks/?search=${debouncedSearchTerm}&sort=${sortOrder}&limit=${limit}&offset=${offset}`
+        );
+
+        setTodos(response.data.tasks);
+        setTotalPages(Math.ceil(response.data.total / limit)); // Update the total page count
+      } catch (error) {
+        console.error("There was an error fetching the tasks!", error);
+      }
+    };
+
+    fetchTodos(page);
+  }, [debouncedSearchTerm, sortOrder, page]);
 
   useEffect(() => {
     const fetchTodos = async () => {
       try {
         let response;
+        const limit = 5; // Tasks per page
+        const offset = (page - 1) * limit; // Calculate the offset
+
         if (debouncedSearchTerm === "") {
-          // Fetch all tasks
           response = await axios.get(
-            `http://localhost:8000/users/1/tasks/?sort=${sortOrder}`
+            `http://localhost:8000/users/1/tasks/?sort=${sortOrder}&limit=${limit}&offset=${offset}`
           );
         } else {
-          // Fetch filtered tasks
           response = await axios.get(
-            `http://localhost:8000/users/1/tasks/?search=${debouncedSearchTerm}&sort=${sortOrder}`
+            `http://localhost:8000/users/1/tasks/?search=${debouncedSearchTerm}&sort=${sortOrder}&limit=${limit}&offset=${offset}`
           );
         }
 
-        setTodos(response.data);
+        console.log(response.data); // Log the response data
+        if (Array.isArray(response.data)) {
+          setTodos(response.data);
+        } else {
+          console.error("Response data is not an array:", response.data);
+          setTodos([]); // Reset to an empty array if the response is not an array
+        }
+
         const initialCheckedStatus = {};
         response.data.forEach((todo) => {
           initialCheckedStatus[todo.id] = todo.is_completed;
@@ -113,14 +145,15 @@ export default function TodoList() {
   const addTodo = () => {
     if (newTodo.trim() !== "") {
       axios
-        .post(
-          `http://localhost:8000/tasks/`, {
-            title: newTodo,
-            user_id: 1,
-            is_completed: false,
-          }
-        )
+        .post(`http://localhost:8000/tasks/`, {
+          title: newTodo,
+          user_id: 1,
+          is_completed: false,
+        })
         .then((response) => {
+          if (!flag) {
+            setFlag(true);
+          }
           setTodos([...todos, response.data]);
           setNewTodo("");
           setCheckedStatus((prev) => ({ ...prev, [response.data.id]: false }));
@@ -135,6 +168,9 @@ export default function TodoList() {
     axios
       .delete(`http://localhost:8000/tasks/${id}`)
       .then(() => {
+        if (todos.length === 1) {
+          setFlag(false);
+        }
         setTodos(todos.filter((todo) => todo.id !== id));
         const { [id]: _, ...remaining } = checkedStatus;
         setCheckedStatus(remaining);
@@ -191,9 +227,16 @@ export default function TodoList() {
     setSortOrder(order);
   };
 
-  const handleClickRedirect=(id)=>{
-    navigate(`/todolist/${id}`)
-  }
+  const handleClickRedirect = (id) => {
+    const token = uuidv4();
+    console.log("token", token);
+    navigate(`/todolist/${id}`, { state: { token: token } });
+  };
+
+  const handlePageChange = (event, value) => {
+    setPage(value);
+    // fetchTodos(value); // Fetch tasks for the selected page
+  };
   return (
     <ThemeProvider theme={theme}>
       <div
@@ -219,14 +262,16 @@ export default function TodoList() {
           </Typography>
 
           {/* Search Bar */}
-          <TextField
-            fullWidth
-            variant="outlined"
-            label="Search Todos"
-            value={searchTerm}
-            onChange={handleSearchChange}
-            style={{ marginBottom: "20px" }}
-          />
+          {flag && (
+            <TextField
+              fullWidth
+              variant="outlined"
+              label="Search Todos"
+              value={searchTerm}
+              onChange={handleSearchChange}
+              style={{ marginBottom: "20px" }}
+            />
+          )}
 
           {/* Add Todo Section */}
           <div
@@ -258,30 +303,32 @@ export default function TodoList() {
           </div>
 
           {/* Sort Buttons */}
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <Button
-              variant="outlined"
-              onClick={() => handleSortChange("asc")}
-              color={sortOrder === "asc" ? "primary" : "default"}
-              style={{
-                borderColor: sortOrder === "asc" ? "#6200ea" : "#ccc",
-                color: sortOrder === "asc" ? "#6200ea" : "#000",
-              }}
-            >
-              Sort Ascending
-            </Button>
-            <Button
-              variant="outlined"
-              onClick={() => handleSortChange("desc")}
-              color={sortOrder === "desc" ? "primary" : "default"}
-              style={{
-                borderColor: sortOrder === "desc" ? "#6200ea" : "#ccc",
-                color: sortOrder === "desc" ? "#6200ea" : "#000",
-              }}
-            >
-              Sort Descending
-            </Button>
-          </div>
+          {flag && (
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <Button
+                variant="outlined"
+                onClick={() => handleSortChange("asc")}
+                color={sortOrder === "asc" ? "primary" : "default"}
+                style={{
+                  borderColor: sortOrder === "asc" ? "#6200ea" : "#ccc",
+                  color: sortOrder === "asc" ? "#6200ea" : "#000",
+                }}
+              >
+                Sort Ascending
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={() => handleSortChange("desc")}
+                color={sortOrder === "desc" ? "primary" : "default"}
+                style={{
+                  borderColor: sortOrder === "desc" ? "#6200ea" : "#ccc",
+                  color: sortOrder === "desc" ? "#6200ea" : "#000",
+                }}
+              >
+                Sort Descending
+              </Button>
+            </div>
+          )}
 
           <List>
             {todos.map((todo) => (
@@ -316,7 +363,7 @@ export default function TodoList() {
                 ) : (
                   <ListItemText
                     primary={todo.title}
-                    onClick={()=>handleClickRedirect(todo.id)}
+                    onClick={() => handleClickRedirect(todo.id)}
                     sx={{ cursor: "pointer" }}
                   />
                 )}
@@ -353,6 +400,14 @@ export default function TodoList() {
               </ListItem>
             ))}
           </List>
+          <Stack spacing={2}>
+            <Pagination
+              count={totalPages}
+              page={page}
+              onChange={handlePageChange}
+              color="primary"
+            />
+          </Stack>
         </Paper>
       </div>
     </ThemeProvider>
