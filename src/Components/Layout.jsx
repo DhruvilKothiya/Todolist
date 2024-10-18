@@ -101,7 +101,7 @@ const Layout = () => {
           </ListItem>
 
           <ListItem disablePadding>
-            <ListItemButton component={Link} to="/todolist?search=">
+            <ListItemButton component={Link} to="/todolist">
               <ListItemText primary="TodoList" />
             </ListItemButton>
           </ListItem>

@@ -49,6 +49,7 @@ const theme = createTheme({
 
 export default function TodoList() {
   const [todos, setTodos] = useState([]);
+  const [searchTodo, setSearchTodo] = useState([]);
   const [newTodo, setNewTodo] = useState("");
   const [editingTodoId, setEditingTodoId] = useState(null);
   const [editingTodoText, setEditingTodoText] = useState("");
@@ -59,12 +60,12 @@ export default function TodoList() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate("");
   const [changesearch, setChangeSearch] = useState([]);
-  const [flag, setFlag] = useState(false);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(10);
 
   useEffect(() => {
-    if (searchParams) {
+    console.log("searchTerm", searchTerm);
+    if (searchParams && searchTerm) {
       if (!searchParams.get("search")) {
         navigate("?search=");
       } else {
@@ -73,57 +74,53 @@ export default function TodoList() {
     }
   }, [searchParams]);
 
-  // Debounce the search term
   useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm);
-      navigate(`?search=${searchTerm}&sort=${sortOrder}`);
-    }, 500);
+    if (searchTerm) {
+      const handler = setTimeout(() => {
+        setDebouncedSearchTerm(searchTerm);
+        navigate(`?search=${searchTerm}&sort=${sortOrder}`);
+      }, 500);
 
-    return () => {
-      clearTimeout(handler);
-    };
+      return () => {
+        clearTimeout(handler);
+      };
+    }
   }, [searchTerm, sortOrder]);
 
   useEffect(() => {
     const fetchTodos = async () => {
       try {
-        const limit = 5; // Tasks per pagec
+        const limit = 4; // Tasks per pagec
         const offset = (page - 1) * limit;
         let response = await axios.get(
           `http://localhost:8000/users/1/tasks/?search=${debouncedSearchTerm}&sort=${sortOrder}&limit=${limit}&offset=${offset}`
         );
 
-        setTodos(response.data.tasks);
+        setSearchTodo(response.data.tasks);
+        console.log(response.data.tasks)
         setTotalPages(Math.ceil(response.data.total / limit)); // Update the total page count
       } catch (error) {
         console.error("There was an error fetching the tasks!", error);
       }
     };
-
-    fetchTodos(page);
+    if (debouncedSearchTerm.trim() !== "") {
+      fetchTodos(page);
+    }
   }, [debouncedSearchTerm, sortOrder, page]);
 
   useEffect(() => {
     const fetchTodos = async () => {
       try {
-        let response;
-        const limit = 5; // Tasks per page
-        const offset = (page - 1) * limit; // Calculate the offset
+        const limit = 4; // Tasks per page
+        const offset = page * limit; // Calculate the offset
+        console.log("debouncedSearchTerm", debouncedSearchTerm);
 
-        if (debouncedSearchTerm === "") {
-          response = await axios.get(
-            `http://localhost:8000/users/1/tasks/?sort=${sortOrder}&limit=${limit}&offset=${offset}`
-          );
-        } else {
-          response = await axios.get(
-            `http://localhost:8000/users/1/tasks/?search=${debouncedSearchTerm}&sort=${sortOrder}&limit=${limit}&offset=${offset}`
-          );
-        }
+        const response = await axios.get(
+          `http://localhost:8000/users/1/tasks/?sort=${sortOrder}&limit=${limit}&offset=${offset}`
+        );
 
-        console.log(response.data); // Log the response data
-        if (Array.isArray(response.data)) {
-          setTodos(response.data);
+        if (Array.isArray(response.data.tasks)) {
+          setTodos(response.data.tasks);
         } else {
           console.error("Response data is not an array:", response.data);
           setTodos([]); // Reset to an empty array if the response is not an array
@@ -148,12 +145,10 @@ export default function TodoList() {
         .post(`http://localhost:8000/tasks/`, {
           title: newTodo,
           user_id: 1,
+
           is_completed: false,
         })
         .then((response) => {
-          if (!flag) {
-            setFlag(true);
-          }
           setTodos([...todos, response.data]);
           setNewTodo("");
           setCheckedStatus((prev) => ({ ...prev, [response.data.id]: false }));
@@ -168,9 +163,6 @@ export default function TodoList() {
     axios
       .delete(`http://localhost:8000/tasks/${id}`)
       .then(() => {
-        if (todos.length === 1) {
-          setFlag(false);
-        }
         setTodos(todos.filter((todo) => todo.id !== id));
         const { [id]: _, ...remaining } = checkedStatus;
         setCheckedStatus(remaining);
@@ -237,6 +229,7 @@ export default function TodoList() {
     setPage(value);
     // fetchTodos(value); // Fetch tasks for the selected page
   };
+  console.log(searchTodo, todos, debouncedSearchTerm);
   return (
     <ThemeProvider theme={theme}>
       <div
@@ -262,7 +255,7 @@ export default function TodoList() {
           </Typography>
 
           {/* Search Bar */}
-          {flag && (
+          {todos.length > 0 && (
             <TextField
               fullWidth
               variant="outlined"
@@ -303,7 +296,7 @@ export default function TodoList() {
           </div>
 
           {/* Sort Buttons */}
-          {flag && (
+          {todos.length > 0 && (
             <div style={{ display: "flex", justifyContent: "space-between" }}>
               <Button
                 variant="outlined"
@@ -331,7 +324,7 @@ export default function TodoList() {
           )}
 
           <List>
-            {todos.map((todo) => (
+            {(searchTerm ? searchTodo : todos).map((todo) => (
               <ListItem
                 key={todo.id}
                 style={{
