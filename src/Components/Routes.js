@@ -12,6 +12,7 @@ import Setting from "./Setting";
 import Token from "./Token";
 import Profile from "./Profile";
 import NotfoundPage from "./NotfoundPage";
+import LoginPage from "./LoginPage";
 
 const AppRoutes = () => {
   const routes = useRoutes([
@@ -28,6 +29,7 @@ const AppRoutes = () => {
         { path: "/todolist/:id", element: <Title /> },
         { path: "/setting", element: <Setting /> },
         { path: "/profile", element: <Profile /> },
+        { path: '/login',element:<LoginPage/>},
         { path: "*", element: <NotfoundPage /> },
       ],
     },

@@ -57,25 +57,17 @@ export default function TodoList() {
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
   const [sortOrder, setSortOrder] = useState("asc"); // State for sorting order
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate("");
-  const [changesearch, setChangeSearch] = useState([]);
-  const [page, setPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(10);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
-    console.log("searchTerm", searchTerm);
-    if (searchParams && searchTerm) {
+    // Handle debounced search term logic
+    if (searchTerm.trim() !== "") {
       if (!searchParams.get("search")) {
         navigate("?search=");
-      } else {
-        setSearchTerm(searchParams.get("search"));
       }
-    }
-  }, [searchParams]);
-
-  useEffect(() => {
-    if (searchTerm) {
       const handler = setTimeout(() => {
         setDebouncedSearchTerm(searchTerm);
         navigate(`?search=${searchTerm}&sort=${sortOrder}`);
@@ -84,74 +76,72 @@ export default function TodoList() {
       return () => {
         clearTimeout(handler);
       };
+    } else {
+      navigate(`/todolist`);
+      setDebouncedSearchTerm(searchTerm);
     }
-  }, [searchTerm, sortOrder]);
+  }, [searchParams, searchTerm, sortOrder]);
 
-  useEffect(() => {
-    const fetchTodos = async () => {
-      try {
-        const limit = 4; // Tasks per pagec
-        const offset = (page - 1) * limit;
-        let response = await axios.get(
-          `http://localhost:8000/users/1/tasks/?search=${debouncedSearchTerm}&sort=${sortOrder}&limit=${limit}&offset=${offset}`
-        );
+  const fetchTodos = async () => {
+    try {
+      const limit = 1;
+      const offset = (page - 1) * limit;
 
-        setSearchTodo(response.data.tasks);
-        console.log(response.data.tasks)
-        setTotalPages(Math.ceil(response.data.total / limit)); // Update the total page count
-      } catch (error) {
-        console.error("There was an error fetching the tasks!", error);
+      let url = `http://localhost:8000/users/tasks/?sort=${sortOrder}&limit=${limit}&offset=${offset}`;
+
+      if (debouncedSearchTerm.trim() !== "") {
+        url += `&search=${debouncedSearchTerm}`;
       }
-    };
-    if (debouncedSearchTerm.trim() !== "") {
-      fetchTodos(page);
-    }
-  }, [debouncedSearchTerm, sortOrder, page]);
 
-  useEffect(() => {
-    const fetchTodos = async () => {
-      try {
-        const limit = 4; // Tasks per page
-        const offset = page * limit; // Calculate the offset
-        console.log("debouncedSearchTerm", debouncedSearchTerm);
+      const response = await axios.get(url, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
 
-        const response = await axios.get(
-          `http://localhost:8000/users/1/tasks/?sort=${sortOrder}&limit=${limit}&offset=${offset}`
-        );
-
-        if (Array.isArray(response.data.tasks)) {
-          setTodos(response.data.tasks);
+      if (Array.isArray(response.data.tasks)) {
+        if (debouncedSearchTerm.trim() !== "") {
+          setSearchTodo(response.data.tasks);
         } else {
-          console.error("Response data is not an array:", response.data);
-          setTodos([]); // Reset to an empty array if the response is not an array
+          setTodos(response.data.tasks);
         }
-
-        const initialCheckedStatus = {};
-        response.data.forEach((todo) => {
-          initialCheckedStatus[todo.id] = todo.is_completed;
-        });
-        setCheckedStatus(initialCheckedStatus);
-      } catch (error) {
-        console.error("There was an error fetching the tasks!", error);
+      } else {
+        console.error("Response data is not an array:", response.data);
+        setTodos([]);
       }
-    };
 
+      setTotalPages(Math.ceil(response.data.total / limit));
+
+      const initialCheckedStatus = {};
+      response.data.tasks.forEach((todo) => {
+        initialCheckedStatus[todo.id] = todo.is_completed;
+      });
+      setCheckedStatus(initialCheckedStatus);
+    } catch (error) {
+      console.error("There was an error fetching the tasks!", error);
+    }
+  };
+
+  useEffect(() => {
     fetchTodos();
-  }, [debouncedSearchTerm, sortOrder]);
+  }, [debouncedSearchTerm, sortOrder, page]);
 
   const addTodo = () => {
     if (newTodo.trim() !== "") {
       axios
-        .post(`http://localhost:8000/tasks/`, {
-          title: newTodo,
-          user_id: 1,
-
-          is_completed: false,
-        })
+        .post(
+          `http://localhost:8000/tasks/`,
+          {
+            title: newTodo,
+            is_completed: false,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        )
         .then((response) => {
-          setTodos([...todos, response.data]);
           setNewTodo("");
-          setCheckedStatus((prev) => ({ ...prev, [response.data.id]: false }));
+          fetchTodos();
         })
         .catch((error) => {
           console.error("There was an error creating the task!", error);
@@ -161,11 +151,13 @@ export default function TodoList() {
 
   const deleteTodo = (id) => {
     axios
-      .delete(`http://localhost:8000/tasks/${id}`)
+      .delete(`http://localhost:8000/tasks/${id}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      })
       .then(() => {
-        setTodos(todos.filter((todo) => todo.id !== id));
-        const { [id]: _, ...remaining } = checkedStatus;
-        setCheckedStatus(remaining);
+        fetchTodos();
       })
       .catch((error) => {
         console.error("There was an error deleting the task!", error);
@@ -178,14 +170,15 @@ export default function TodoList() {
     axios
       .put(
         `http://localhost:8000/tasks/${id}?title=${editingTodoText}&is_completed=${todoToUpdate.is_completed}`,
-        null
+        null,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
       )
       .then(() => {
-        setTodos(
-          todos.map((todo) =>
-            todo.id === id ? { ...todo, title: editingTodoText } : todo
-          )
-        );
+        fetchTodos();
         setEditingTodoId(null);
       })
       .catch((error) => {
@@ -201,7 +194,12 @@ export default function TodoList() {
       .put(
         `http://localhost:8000/tasks/${id}?title=${
           todos.find((todo) => todo.id === id).title
-        }&is_completed=${newCheckedStatus}`
+        }&is_completed=${newCheckedStatus}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
       )
       .then(() => {
         // Optionally update the local state if needed
@@ -227,9 +225,11 @@ export default function TodoList() {
 
   const handlePageChange = (event, value) => {
     setPage(value);
-    // fetchTodos(value); // Fetch tasks for the selected page
   };
+
+  console.log(totalPages);
   console.log(searchTodo, todos, debouncedSearchTerm);
+
   return (
     <ThemeProvider theme={theme}>
       <div
@@ -279,6 +279,9 @@ export default function TodoList() {
               variant="outlined"
               label="Add your new todo"
               value={newTodo}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") addTodo();
+              }}
               onChange={(e) => setNewTodo(e.target.value)}
               style={{ marginRight: "10px" }}
             />
@@ -393,14 +396,24 @@ export default function TodoList() {
               </ListItem>
             ))}
           </List>
-          <Stack spacing={2}>
-            <Pagination
-              count={totalPages}
-              page={page}
-              onChange={handlePageChange}
-              color="primary"
-            />
-          </Stack>
+          {totalPages > 1 && (
+            <Stack
+              spacing={2}
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                marginTop: "20px",
+                width: "85%", // Add margin on top to space out from the list
+              }}
+            >
+              <Pagination
+                count={totalPages}
+                page={page}
+                onChange={handlePageChange}
+                color="primary"
+              />
+            </Stack>
+          )}
         </Paper>
       </div>
     </ThemeProvider>
