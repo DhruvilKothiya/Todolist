@@ -29,38 +29,31 @@ const theme = createTheme({
   },
 });
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const [email, setEmail] = useState("");
-  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
   const navigate = useNavigate();
 
-  const handleLogin = async () => {
+  const handleRegister = async () => {
     try {
-      // Prepare login payload
-      const loginPayload = {
+      // Prepare registration payload
+      const registerPayload = {
+        name,
         email,
         password,
       };
 
-      // Send login request to your FastAPI backend
+      // Send registration request to your FastAPI backend
       const response = await axios.post(
-        "http://localhost:8000/token",
-        loginPayload
+        "http://localhost:8000/users/",
+        registerPayload
       );
-    //   console.log('response',response.data)
-
-      // Extract token from the response
-      const { access_token } = response.data;
-
-      // Store token in localStorage (or use context)
-      localStorage.setItem("token", access_token);
-
-      // On successful login, navigate to the Todo List page
-      navigate("/todolist");
+      alert("Registration successful! Please log in.");
+      navigate("/login");
     } catch (error) {
-      console.error("Login error:", error);
-      alert("Failed to log in. Please check your credentials.");
+      console.error("Registration error:", error);
+      alert("Failed to register. Please check your details.");
     }
   };
 
@@ -85,21 +78,20 @@ export default function LoginPage() {
           }}
         >
           <Typography variant="h1" align="center" gutterBottom>
-            Login
+            Register
           </Typography>
 
-          {/* Email Field */}
-
-          {/* Username Field */}
-          {/* <TextField
+          {/* Name Field */}
+          <TextField
             fullWidth
             variant="outlined"
-            label="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            label="Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             style={{ marginBottom: "20px" }}
-          /> */}
+          />
 
+          {/* Email Field */}
           <TextField
             fullWidth
             variant="outlined"
@@ -108,6 +100,7 @@ export default function LoginPage() {
             onChange={(e) => setEmail(e.target.value)}
             style={{ marginBottom: "20px" }}
           />
+
           {/* Password Field */}
           <TextField
             fullWidth
@@ -119,14 +112,14 @@ export default function LoginPage() {
             style={{ marginBottom: "20px" }}
           />
 
-          {/* Login Button */}
+          {/* Register Button */}
           <Button
             variant="contained"
             color="primary"
-            onClick={handleLogin}
+            onClick={handleRegister}
             style={{ width: "100%" }}
           >
-            Login
+            Register
           </Button>
         </Paper>
       </div>

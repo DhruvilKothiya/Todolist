@@ -1,8 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 import { Box, Typography, Switch, FormControlLabel } from "@mui/material";
 
 const Setting = () => {
-  const [darkMode, setDarkMode] = React.useState(false);
+  const [darkMode, setDarkMode] = useState(false)
 
   const handleDarkModeChange = (event) => {
     setDarkMode(event.target.checked);

@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, Navigate } from "react-router-dom"; // Ensure Link is imported
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   AppBar,
   Toolbar,
@@ -18,7 +18,11 @@ const pages = ["Home", "About"];
 const settings = ["Profile", "Logout"];
 
 const Navbar = () => {
-  const [anchorElUser, setAnchorElUser] = React.useState();
+  const [anchorElUser, setAnchorElUser] = React.useState(null);
+  const auth = localStorage.getItem("token");
+  const navigate = useNavigate();
+  const location = useLocation();
+  // console.log(location, "test 123")
 
   // Handlers for user settings menu
   const handleOpenUserMenu = (event) => {
@@ -27,6 +31,24 @@ const Navbar = () => {
 
   const handleCloseUserMenu = () => {
     setAnchorElUser(null);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("token"); // Correctly remove token
+    navigate("/login");
+  };
+
+  const handleProfile = () => {
+    navigate("/profile");
+  };
+
+  // Toggle between Register and Login
+  const handleAuthAction = () => {
+    if (location.pathname!=="/login") {
+      navigate("/login");
+    } else {  
+      navigate("/register");
+    }
   };
 
   // Array destructuring
@@ -58,37 +80,51 @@ const Navbar = () => {
             </Button>
           </Box>
 
+          {/* Toggle between Register and Login */}
+          {!auth && (
+            <Box>
+              <Button
+                sx={{ my: 2, color: "white", display: "block" }}
+                onClick={handleAuthAction} // Call the function to handle auth action
+              >
+                {location.pathname!=="/login" ? "Login" : "Sign Up"}
+              </Button>
+            </Box>
+          )}
+
           {/* User Avatar and Settings */}
-          <Box sx={{ flexGrow: 0 }}>
-            <Tooltip title="Open settings">
-              <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                <Avatar alt="User Avatar" src="/static/images/avatar/2.jpg" />
-              </IconButton>
-            </Tooltip>
-            <Menu
-              sx={{ mt: "45px" }}
-              id="menu-appbar"
-              anchorEl={anchorElUser}
-              anchorOrigin={{
-                vertical: "top",
-                horizontal: "right",
-              }}
-              keepMounted
-              transformOrigin={{
-                vertical: "top",
-                horizontal: "right",
-              }}
-              open={Boolean(anchorElUser)}
-              onClose={handleCloseUserMenu}
-            >
-              <MenuItem onClick={handleCloseUserMenu}>
-                <Typography textAlign="center" >{profile}</Typography>
-              </MenuItem>
-              <MenuItem onClick={handleCloseUserMenu}>
-                <Typography textAlign="center">{logout}</Typography>
-              </MenuItem>
-            </Menu>
-          </Box>
+          {auth && (
+            <Box sx={{ flexGrow: 0 }}>
+              <Tooltip title="Open settings">
+                <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
+                  <Avatar alt="User Avatar" src="/static/images/avatar/2.jpg" />
+                </IconButton>
+              </Tooltip>
+              <Menu
+                sx={{ mt: "45px" }}
+                id="menu-appbar"
+                anchorEl={anchorElUser}
+                anchorOrigin={{
+                  vertical: "top",
+                  horizontal: "right",
+                }}
+                keepMounted
+                transformOrigin={{
+                  vertical: "top",
+                  horizontal: "right",
+                }}
+                open={Boolean(anchorElUser)}
+                onClose={handleCloseUserMenu}
+              >
+                <MenuItem onClick={handleProfile}>
+                  <Typography textAlign="center">{profile}</Typography>
+                </MenuItem>
+                <MenuItem onClick={handleLogout}>
+                  <Typography textAlign="center">{logout}</Typography>
+                </MenuItem>
+              </Menu>
+            </Box>
+          )}
         </Toolbar>
       </Container>
     </AppBar>

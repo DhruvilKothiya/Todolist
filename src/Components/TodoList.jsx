@@ -71,7 +71,7 @@ export default function TodoList() {
       const handler = setTimeout(() => {
         setDebouncedSearchTerm(searchTerm);
         navigate(`?search=${searchTerm}&sort=${sortOrder}`);
-      }, 500);
+      }, 1);
 
       return () => {
         clearTimeout(handler);
@@ -341,12 +341,12 @@ export default function TodoList() {
                     : "none",
                 }}
               >
+
                 <Checkbox
                   checked={checkedStatus[todo.id] || false}
                   onChange={() => handleCheckboxChange(todo.id)}
                   inputProps={{ "aria-label": "controlled" }}
                 />
-
                 {editingTodoId === todo.id ? (
                   <TextField
                     fullWidth
