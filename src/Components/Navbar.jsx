@@ -13,6 +13,8 @@ import {
   Menu,
   MenuItem,
 } from "@mui/material";
+import { logout as reduxLogout, login } from "../Store/authSlice";
+import { useDispatch } from "react-redux";
 
 const pages = ["Home", "About"];
 const settings = ["Profile", "Logout"];
@@ -22,6 +24,7 @@ const Navbar = () => {
   const auth = localStorage.getItem("token");
   const navigate = useNavigate();
   const location = useLocation();
+  const dispatch=useDispatch();
   // console.log(location, "test 123")
 
   // Handlers for user settings menu
@@ -34,6 +37,7 @@ const Navbar = () => {
   };
 
   const handleLogout = () => {
+    dispatch(reduxLogout())
     localStorage.removeItem("token"); // Correctly remove token
     navigate("/login");
   };
@@ -97,8 +101,8 @@ const Navbar = () => {
             <Box sx={{ flexGrow: 0 }}>
               <Tooltip title="Open settings">
                 <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                  <Avatar alt="User Avatar" src="/static/images/avatar/2.jpg" />
-                </IconButton>
+                  <Avatar alt="Dhruvil" src="/static/images/avatar/2.jpg" sx={{color:'white'}}/>
+                </IconButton> 
               </Tooltip>
               <Menu
                 sx={{ mt: "45px" }}
