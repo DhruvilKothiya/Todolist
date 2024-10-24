@@ -1,40 +1,64 @@
-import React from "react";
+import React, { Profiler } from "react";
 import { useRoutes, Navigate } from "react-router-dom";
 import Home from "./Home";
 import About from "./About";
 import TodoList from "./TodoList";
 import Layout from "./Layout";
 import Title from "./Title";
-import Dashboard from "./Dashbord";
+import Dashbord from "./Dashbord";
 import Setting from "./Setting";
 import Token from "./Token";
 import NotfoundPage from "./NotfoundPage";
 import LoginPage from "./LoginPage";
 import Profile from "./Profile";
 import RegisterPage from "./RegisterPage";
+import { useSelector } from "react-redux";
 
-// Protected Route Wrapper
-const ProtectedRoute = ({ auth, children }) => {
-  return auth ? children : <Navigate to="/login" />;
+export const ProtectedRoute = ({ auth, element }) => {
+  return auth ? element : <Navigate to="/login" />;
 };
 
 const AppRoutes = () => {
+  // const auth = localStorage.getItem("token"); // Check for authentication token
+  // console.log("auth", auth);
+  const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
+  // Helper function to handle protected routes
+
   const routes = useRoutes([
     {
       path: "/",
       element: <Layout />,
       children: [
         { path: "/", element: <Home /> },
+        { path: "/login", element: <LoginPage /> },
+        { path: "/register", element: <RegisterPage /> }, // Public Route
+        { path: "*", element: <NotfoundPage /> }, // Catch all other routes
         { path: "/about", element: <About /> },
-        // { path: "/tokenpage/:token", element: <TokenPage /> },
-        { path: "/token/:token", element: <Token /> },
-        { path: "/todolist", element: <TodoList /> },
-        { path: "/dashboard", element: <Dashboard/> },
-        { path: "/todolist/:id", element: <Title /> },
-        { path: "/setting", element: <Setting /> },
-        { path: "/profile", element: <Profile /> },
-        { path: '/login',element:<LoginPage/>},
-        { path: "*", element: <NotfoundPage /> },
+        {
+          path: "/todolist",
+          element: <ProtectedRoute auth={isLoggedIn} element={<TodoList />} />,
+        }, // Protected Route
+        {
+          path: "/dashboard",
+          element: <ProtectedRoute auth={isLoggedIn} element={<Dashbord />} />,
+        }, // Protected Route
+        {
+          path: "/todolist/:id",
+          element: <ProtectedRoute auth={isLoggedIn} element={<Title />} />,
+        }, // Protected Route
+        {
+          path: "/setting",
+          element: <ProtectedRoute auth={isLoggedIn} element={<Setting />} />,
+        },
+        {
+          path: "/profile",
+          element: <ProtectedRoute auth={isLoggedIn} element={<Profile />} />,
+        }, // Protected Route
+        // Protected Route
+        {
+          path: "/token/:token",
+          element: <ProtectedRoute auth={isLoggedIn } element={<Token />} />,
+        }, // Protected Route
       ],
     },
   ]);

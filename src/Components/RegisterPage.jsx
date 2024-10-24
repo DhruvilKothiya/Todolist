@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import {
   TextField,
   Button,
@@ -9,6 +9,7 @@ import {
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { ThemeContext } from "../ThemeContext";
 
 const theme = createTheme({
   palette: {
@@ -34,6 +35,7 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const navigate = useNavigate();
+  const { darkMode } = useContext(ThemeContext);
 
   const handleRegister = async () => {
     try {
@@ -49,8 +51,9 @@ export default function RegisterPage() {
         "http://localhost:8000/users/",
         registerPayload
       );
+      console.log("API Response:", response);
       alert("Registration successful! Please log in.");
-      navigate("/login");
+      navigate("/todolist");
     } catch (error) {
       console.error("Registration error:", error);
       alert("Failed to register. Please check your details.");
@@ -58,71 +61,72 @@ export default function RegisterPage() {
   };
 
   return (
-    <ThemeProvider theme={theme}>
-      <div
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        minHeight: "100vh",
+        backgroundImage: darkMode
+          ? "linear-gradient(#212121, #2e2e2e)" // Dark mode background
+          : "linear-gradient(#94FFD8, #2ab1e0, #348beb)", // Light mode background
+      }}
+    >
+      <Paper
+        elevation={3}
         style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: "100vh",
-          backgroundImage: "linear-gradient(#94FFD8,#2ab1e0,#348beb)",
+          padding: "30px",
+          borderRadius: "15px",
+          maxWidth: "400px",
+          width: "100%",
+          backgroundColor: darkMode ? "#424242" : "#fff", // Adapt paper background to theme
         }}
       >
-        <Paper
-          elevation={3}
-          style={{
-            padding: "30px",
-            borderRadius: "15px",
-            maxWidth: "400px",
-            width: "100%",
-          }}
+        <Typography variant="h1" align="center" gutterBottom>
+          Register Page
+        </Typography>
+
+        {/* Name Field */}
+        <TextField
+          fullWidth
+          variant="outlined"
+          label="Name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          style={{ marginBottom: "20px" }}
+        />
+
+        {/* Email Field */}
+        <TextField
+          fullWidth
+          variant="outlined"
+          label="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          style={{ marginBottom: "20px" }}
+        />
+
+        {/* Password Field */}
+        <TextField
+          fullWidth
+          variant="outlined"
+          label="Password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          style={{ marginBottom: "20px" }}
+        />
+
+        {/* Register Button */}
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handleRegister}
+          style={{ width: "100%" }}
         >
-          <Typography variant="h1" align="center" gutterBottom>
-            Register
-          </Typography>
-
-          {/* Name Field */}
-          <TextField
-            fullWidth
-            variant="outlined"
-            label="Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            style={{ marginBottom: "20px" }}
-          />
-
-          {/* Email Field */}
-          <TextField
-            fullWidth
-            variant="outlined"
-            label="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            style={{ marginBottom: "20px" }}
-          />
-
-          {/* Password Field */}
-          <TextField
-            fullWidth
-            variant="outlined"
-            label="Password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            style={{ marginBottom: "20px" }}
-          />
-
-          {/* Register Button */}
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleRegister}
-            style={{ width: "100%" }}
-          >
-            Register
-          </Button>
-        </Paper>
-      </div>
-    </ThemeProvider>
+          Register
+        </Button>
+      </Paper>
+    </div>
   );
 }

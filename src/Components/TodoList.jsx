@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import {
   TextField,
   Button,
@@ -21,6 +21,7 @@ import Pagination from "@mui/material/Pagination";
 import Stack from "@mui/material/Stack";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
+import { ThemeContext } from "../ThemeContext";
 
 const theme = createTheme({
   palette: {
@@ -61,6 +62,7 @@ export default function TodoList() {
   const navigate = useNavigate("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const { darkMode } = useContext(ThemeContext);
 
   useEffect(() => {
     // Handle debounced search term logic
@@ -190,6 +192,7 @@ export default function TodoList() {
     const newCheckedStatus = !checkedStatus[id];
     setCheckedStatus((prev) => ({ ...prev, [id]: newCheckedStatus }));
 
+    console.log(localStorage.getItem("token"))
     axios
       .put(
         `http://localhost:8000/tasks/${id}?title=${
@@ -202,7 +205,6 @@ export default function TodoList() {
         }
       )
       .then(() => {
-        // Optionally update the local state if needed
       })
       .catch((error) => {
         console.error("There was an error updating the task status!", error);
@@ -231,191 +233,192 @@ export default function TodoList() {
   console.log(searchTodo, todos, debouncedSearchTerm);
 
   return (
-    <ThemeProvider theme={theme}>
-      <div
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        minHeight: "100vh",
+        backgroundImage: darkMode
+          ? "linear-gradient(#212121, #2e2e2e)" // Dark mode background
+          : "linear-gradient(#94FFD8, #2ab1e0, #348beb)", // Light mode background
+      }}
+    >
+      <Paper
+        elevation={3}
         style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: "100vh",
-          backgroundImage: "linear-gradient(#94FFD8,#2ab1e0,#348beb)",
+          padding: "30px",
+          borderRadius: "15px",
+          maxWidth: "400px",
+          width: "100%",
+          backgroundColor: darkMode ? "#424242" : "#fff", // Adapt paper background to theme
         }}
       >
-        <Paper
-          elevation={3}
+        <Typography variant="h1" align="center" gutterBottom>
+          Todo App
+        </Typography>
+
+        {/* Search Bar */}
+        {todos.length > 0 && (
+          <TextField
+            fullWidth
+            variant="outlined"
+            label="Search Todos"
+            value={searchTerm}
+            onChange={handleSearchChange}
+            style={{ marginBottom: "20px" }}
+          />
+        )}
+
+        {/* Add Todo Section */}
+        <div
           style={{
-            padding: "30px",
-            borderRadius: "15px",
-            maxWidth: "400px",
-            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            marginBottom: "20px",
           }}
         >
-          <Typography variant="h1" align="center" gutterBottom>
-            Todo App
-          </Typography>
-
-          {/* Search Bar */}
-          {todos.length > 0 && (
-            <TextField
-              fullWidth
-              variant="outlined"
-              label="Search Todos"
-              value={searchTerm}
-              onChange={handleSearchChange}
-              style={{ marginBottom: "20px" }}
-            />
-          )}
-
-          {/* Add Todo Section */}
-          <div
+          <TextField
+            fullWidth
+            variant="outlined"
+            label="Add your new todo"
+            value={newTodo}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") addTodo();
+            }}
+            onChange={(e) => setNewTodo(e.target.value)}
+            style={{ marginRight: "10px" }}
+          />
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={addTodo}
             style={{
-              display: "flex",
-              alignItems: "center",
-              marginBottom: "20px",
+              minWidth: "50px",
+              padding: "10px",
             }}
           >
-            <TextField
-              fullWidth
-              variant="outlined"
-              label="Add your new todo"
-              value={newTodo}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") addTodo();
-              }}
-              onChange={(e) => setNewTodo(e.target.value)}
-              style={{ marginRight: "10px" }}
-            />
+            <AddIcon />
+          </Button>
+        </div>
+
+        {/* Sort Buttons */}
+        {todos.length > 0 && (
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
             <Button
-              variant="contained"
-              color="primary"
-              onClick={addTodo}
+              variant="outlined"
+              onClick={() => handleSortChange("asc")}
+              color={sortOrder === "asc" ? "primary" : "default"}
               style={{
-                minWidth: "50px",
-                padding: "10px",
+                borderColor: sortOrder === "asc" ? "#1976d2" : "#ccc",
+                color: sortOrder === "asc" ? "#1976d2" : "#000",
               }}
             >
-              <AddIcon />
+              Sort Ascending
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={() => handleSortChange("desc")}
+              color={sortOrder === "desc" ? "primary" : "default"}
+              style={{
+                borderColor: sortOrder === "desc" ? "#1976d2" : "#ccc",
+                color: sortOrder === "desc" ? "#1976d2" : "#000",
+              }}
+            >
+              Sort Descending
             </Button>
           </div>
+        )}
 
-          {/* Sort Buttons */}
-          {todos.length > 0 && (
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <Button
-                variant="outlined"
-                onClick={() => handleSortChange("asc")}
-                color={sortOrder === "asc" ? "primary" : "default"}
-                style={{
-                  borderColor: sortOrder === "asc" ? "#6200ea" : "#ccc",
-                  color: sortOrder === "asc" ? "#6200ea" : "#000",
-                }}
-              >
-                Sort Ascending
-              </Button>
-              <Button
-                variant="outlined"
-                onClick={() => handleSortChange("desc")}
-                color={sortOrder === "desc" ? "primary" : "default"}
-                style={{
-                  borderColor: sortOrder === "desc" ? "#6200ea" : "#ccc",
-                  color: sortOrder === "desc" ? "#6200ea" : "#000",
-                }}
-              >
-                Sort Descending
-              </Button>
-            </div>
-          )}
-
-          <List>
-            {(searchTerm ? searchTodo : todos).map((todo) => (
-              <ListItem
-                key={todo.id}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  backgroundColor: "#f0f0f0",
-                  marginBottom: "10px",
-                  borderRadius: "8px",
-                  textDecoration: checkedStatus[todo.id]
-                    ? "line-through"
-                    : "none",
-                }}
-              >
-
-                <Checkbox
-                  checked={checkedStatus[todo.id] || false}
-                  onChange={() => handleCheckboxChange(todo.id)}
-                  inputProps={{ "aria-label": "controlled" }}
-                />
-                {editingTodoId === todo.id ? (
-                  <TextField
-                    fullWidth
-                    value={editingTodoText}
-                    onChange={(e) => setEditingTodoText(e.target.value)}
-                    variant="outlined"
-                    style={{ marginRight: "10px" }}
-                    disabled={checkedStatus[todo.id]}
-                  />
-                ) : (
-                  <ListItemText
-                    primary={todo.title}
-                    onClick={() => handleClickRedirect(todo.id)}
-                    sx={{ cursor: "pointer" }}
-                  />
-                )}
-
-                <div>
-                  {editingTodoId === todo.id ? (
-                    <IconButton
-                      onClick={() => saveTodo(todo.id)}
-                      color="primary"
-                      aria-label="save"
-                    >
-                      <CheckIcon />
-                    </IconButton>
-                  ) : (
-                    <IconButton
-                      onClick={() => {
-                        setEditingTodoId(todo.id);
-                        setEditingTodoText(todo.title);
-                      }}
-                      color="primary"
-                      aria-label="edit"
-                    >
-                      <EditIcon />
-                    </IconButton>
-                  )}
-                  <IconButton
-                    onClick={() => deleteTodo(todo.id)}
-                    color="error"
-                    aria-label="delete"
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                </div>
-              </ListItem>
-            ))}
-          </List>
-          {totalPages > 1 && (
-            <Stack
-              spacing={2}
-              sx={{
+        <List>
+          {(searchTerm ? searchTodo : todos).map((todo) => (
+            <ListItem
+              key={todo.id}
+              style={{
                 display: "flex",
-                justifyContent: "center",
-                marginTop: "20px",
-                width: "85%", // Add margin on top to space out from the list
+                justifyContent: "space-between",
+                backgroundColor: "#f0f0f0",
+                marginBottom: "10px",
+                borderRadius: "8px",
+                textDecoration: checkedStatus[todo.id]
+                  ? "line-through"
+                  : "none",
               }}
             >
-              <Pagination
-                count={totalPages}
-                page={page}
-                onChange={handlePageChange}
-                color="primary"
+              <Checkbox
+                checked={checkedStatus[todo.id] || false}
+                onChange={() => handleCheckboxChange(todo.id)}
+                inputProps={{ "aria-label": "controlled" }}
+                sx={{color:'black'}}
               />
-            </Stack>
-          )}
-        </Paper>
-      </div>
-    </ThemeProvider>
+              {editingTodoId === todo.id ? (
+                <TextField
+                  fullWidth
+                  value={editingTodoText}
+                  onChange={(e) => setEditingTodoText(e.target.value)}
+                  variant="outlined"
+                  style={{ marginRight: "10px" }}
+                  disabled={checkedStatus[todo.id]}
+                />
+              ) : (
+                <ListItemText
+                  primary={todo.title}
+                  onClick={() => handleClickRedirect(todo.id)}
+                  sx={{ cursor: "pointer",color:'black' }}
+                />
+              )}
+
+              <div>
+                {editingTodoId === todo.id ? (
+                  <IconButton
+                    onClick={() => saveTodo(todo.id)}
+                    color="primary"
+                    aria-label="save"
+                  >
+                    <CheckIcon />
+                  </IconButton>
+                ) : (
+                  <IconButton
+                    onClick={() => {
+                      setEditingTodoId(todo.id);
+                      setEditingTodoText(todo.title);
+                    }}
+                    color="primary"
+                    aria-label="edit"
+                  >
+                    <EditIcon />
+                  </IconButton>
+                )}
+                <IconButton
+                  onClick={() => deleteTodo(todo.id)}
+                  color="error"
+                  aria-label="delete"
+                >
+                  <DeleteIcon />
+                </IconButton>
+              </div>
+            </ListItem>
+          ))}
+        </List>
+        {totalPages > 1 && (
+          <Stack
+            spacing={2}
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              marginTop: "20px",
+              width: "85%", // Add margin on top to space out from the list
+            }}
+          >
+            <Pagination
+              count={totalPages}
+              page={page}
+              onChange={handlePageChange}
+              color="primary"
+            />
+          </Stack>
+        )}
+      </Paper>
+    </div>
   );
 }
